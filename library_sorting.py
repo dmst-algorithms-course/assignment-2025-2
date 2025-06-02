@@ -2,6 +2,26 @@ import sys
 import json
 import argparse
 
+def bisect_left(a, x):
+    '''
+    Binary search to find leftmost position for x in sorted list a
+    '''
+    lo, hi = 0, len(a)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if a[mid] < x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+def insort(a, x):
+    '''
+    Insert x into sorted list a at correct position
+    '''
+    idx = bisect_left(a, x)
+    a.insert(idx, x)
+
 # Global variables for table state and parameters
 nn = []        # List of thresholds per stage
 mm = []        # List of multipliers per stage
