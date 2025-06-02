@@ -3,9 +3,7 @@ import json
 import argparse
 
 def bisect_left(a, x):
-    '''
-    Binary search to find leftmost position for x in sorted list a
-    '''
+    ''' Binary search to find leftmost position for x in sorted list a  '''
     lo, hi = 0, len(a)
     while lo < hi:
         mid = (lo + hi) // 2
@@ -16,13 +14,11 @@ def bisect_left(a, x):
     return lo
 
 def insort(a, x):
-    '''
-    Insert x into sorted list a at correct position
-    '''
+    ''' Insert x into sorted list a at correct position '''
     idx = bisect_left(a, x)
     a.insert(idx, x)
 
-# Global variables for table state and parameters
+''' Global variables for table state and parameters '''
 nn = []        # List of thresholds per stage
 mm = []        # List of multipliers per stage
 k_stage = 0    # Current stage (1-based)
@@ -34,9 +30,7 @@ head = 0       # Starting index for circular layout
 auth_list = [] # Sorted list of real keys
 
 def recalc_head():
-    '''
-    Update head to point to minimal real key in array 
-    '''
+    ''' Update head to point to minimal real key in array '''
     global head
     min_val = None
     for i in range(m_cap):
@@ -52,9 +46,7 @@ def recalc_head():
             return
  
 def init_table(thresholds, multipliers, stage, initial_key):
-    '''
-    Initialize the sparse array table for stage and initial key
-    '''
+    ''' Initialize the sparse array table for stage and initial key '''
     global nn, mm, k_stage, n_auth, m_cap, y, mask, auth_list
     nn = thresholds
     mm = multipliers
@@ -72,9 +64,7 @@ def print_create(initial_key):
     print_table()
 
 def print_table():
-    '''
-    Print the table, marking the head position using > <.
-    '''
+    ''' Print the table, marking the head position using > <.'''
     parts = []
     for i, val in enumerate(y):
         s = repr(val)
