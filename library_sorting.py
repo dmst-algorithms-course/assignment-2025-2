@@ -2,6 +2,17 @@ import sys
 import json
 import argparse
 
+''' Global variables for table state and parameters '''
+nn = []        # List of thresholds per stage
+mm = []        # List of multipliers per stage
+k_stage = 0    # Current stage (1-based)
+n_auth = 0     # Number of real elements in array
+m_cap = 0      # Current capacity of array
+y = []         # The array values (keys+ dummies)
+mask = []      # True if position holds a real key, False for dummy
+head = 0       # Starting index for circular layout
+auth_list = [] # Sorted list of real keys
+
 def bisect_left(a, x):
     ''' Binary search to find leftmost position for x in sorted list a  '''
     lo, hi = 0, len(a)
@@ -18,16 +29,6 @@ def insort(a, x):
     idx = bisect_left(a, x)
     a.insert(idx, x)
 
-''' Global variables for table state and parameters '''
-nn = []        # List of thresholds per stage
-mm = []        # List of multipliers per stage
-k_stage = 0    # Current stage (1-based)
-n_auth = 0     # Number of real elements in array
-m_cap = 0      # Current capacity of array
-y = []         # The array values (keys+ dummies)
-mask = []      # True if position holds a real key, False for dummy
-head = 0       # Starting index for circular layout
-auth_list = [] # Sorted list of real keys
 
 def recalc_head():
     ''' Update head to point to minimal real key in array '''
@@ -72,6 +73,31 @@ def print_table():
             s = f">{s}<"
         parts.append(s)
     print("[" + ", ".join(parts) + "]")
+
+def rotated():
+    ''' Return array and mask rotated so head is first '''
+    rot_y = [y[(head + i) % m_cap] for i in range(m_cap)]
+    rot_mask = [mask[(head + i) % m_cap] for i in range(m_cap)]
+    return rot_y, rot_mask
+
+def lookup(key):
+    ''' Look up key: returns (found, position to find or insert) '''
+    rot_y, rot_mask = rotated()
+    idx = bisect_left(rot_y, key)
+    found = False
+    pos = None
+    for j in range(idx, idx + m_cap):
+        j_mod = j % m_cap
+        if rot_y[j_mod] != key:
+            break
+        if rot_mask[j_mod]:
+            found = True
+            pos = (head + j_mod) % m_cap
+            break
+    if not found:
+        insert_idx = idx if idx <= m_cap else m_cap
+        pos = (head + insert_idx) % m_cap
+    return found, pos
 
 
 def main():
