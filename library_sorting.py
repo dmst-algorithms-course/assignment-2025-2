@@ -99,7 +99,58 @@ def lookup(key):
         pos = (head + insert_idx) % m_cap
     return found, pos
 
+def rebuild(new_stage):
+    global k_stage, m_cap, y, mask
+    old_auth = sorted(auth_list)
+    old_n = n_auth
+    k_stage = new_stage
+    m_cap = int(nn[k_stage - 1] * mm[k_stage - 1])
+    new_y = [None] * m_cap
+    new_mask = [False] * m_cap
+    positions = []
+    for t in range(old_n):
+        idx = (t * m_cap) // old_n
+        positions.append(idx)
+        new_y[idx] = old_auth[t]
+        new_mask[idx] = True
+    for t in range(old_n):
+        start = positions[t]
+        end = positions[(t + 1) % old_n] + (m_cap if (t + 1) == old_n else 0)
+        for pos in range(start + 1, end):
+            new_y[pos % m_cap] = new_y[start]
+    y[:] = new_y
+    mask[:] = new_mask
+    recalc_head()
 
+def insert_key(key):
+    global n_auth
+    if n_auth == nn[k_stage]:
+        rebuild(k_stage + 1)
+    found, pos = lookup(key)
+    if found:
+        recalc_head()
+        return
+    if not mask[pos]:
+        y[pos] = key
+        mask[pos] = True
+        insort(auth_list, key)
+        n_auth += 1
+    else:
+        shift_pos = pos
+        while mask[shift_pos]:
+            shift_pos = (shift_pos + 1) % m_cap
+        idx = shift_pos
+        while idx != pos:
+            prev_idx = (idx - 1) % m_cap
+            y[idx] = y[prev_idx]
+            mask[idx] = True
+            idx = prev_idx
+        y[pos] = key
+        mask[pos] = True
+        insort(auth_list, key)
+        n_auth += 1
+    recalc_head()
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('test')
@@ -110,6 +161,19 @@ def main():
     mask.clear()
     init_table(data['nn'], data['mm'], data['k'], data['x'])
     print_create(data['x'])
+    for act in data['actions']:
+        cmd = act['action']
+        key = act['key']
+        print(f"{cmd.upper()} {key}")
+        if cmd == 'insert':
+            insert_key(key)
+        elif cmd == 'lookup':
+            found, pos = lookup(key)
+            if found:
+                print(f"Key {key} found at position {pos}.")
+            else:
+                print(f"Key {key} not found. It should be at position {pos}.")
+        print_table()
 
 if __name__ == '__main__':
     main()
