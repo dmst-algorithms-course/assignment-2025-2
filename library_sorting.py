@@ -86,6 +86,7 @@ def lookup(key):
     idx = bisect_left(rot_y, key)
     found = False
     pos = None
+    # Scan for key among possibly multiple duplicates
     for j in range(idx, idx + m_cap):
         j_mod = j % m_cap
         if rot_y[j_mod] != key:
@@ -100,6 +101,7 @@ def lookup(key):
     return found, pos
 
 def rebuild(new_stage):
+    ''' Rebuild the array for new stage (resize and redistribute keys) '''
     global k_stage, m_cap, y, mask
     old_auth = sorted(auth_list)
     old_n = n_auth
@@ -108,11 +110,15 @@ def rebuild(new_stage):
     new_y = [None] * m_cap
     new_mask = [False] * m_cap
     positions = []
+    
+    # Place real keys at proportional positions
     for t in range(old_n):
         idx = (t * m_cap) // old_n
         positions.append(idx)
         new_y[idx] = old_auth[t]
         new_mask[idx] = True
+
+    # Fill dummy regions between real keys
     for t in range(old_n):
         start = positions[t]
         end = positions[(t + 1) % old_n] + (m_cap if (t + 1) == old_n else 0)
@@ -123,13 +129,16 @@ def rebuild(new_stage):
     recalc_head()
 
 def insert_key(key):
+    ''' Insert key into the array (with shifting if collision, triggers rebuild if needed) '''
     global n_auth
     if n_auth == nn[k_stage]:
         rebuild(k_stage + 1)
     found, pos = lookup(key)
+    
     if found:
         recalc_head()
         return
+        
     if not mask[pos]:
         y[pos] = key
         mask[pos] = True
@@ -152,6 +161,7 @@ def insert_key(key):
     recalc_head()
     
 def main():
+    ''' main(): reads actions from JSON, applies them, and prints state '''
     parser = argparse.ArgumentParser()
     parser.add_argument('test')
     args = parser.parse_args()
